@@ -18,6 +18,8 @@
 #ifndef _LLDP_TLV_H
 #define _LLDP_TLV_H
 
+#include <asm/types.h>
+
 #define LLDP_ADDR_NEAREST_BRIDGE       \
   {                                    \
     0x01, 0x80, 0xc2, 0x00, 0x00, 0x0e \
