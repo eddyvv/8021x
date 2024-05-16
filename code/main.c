@@ -7,7 +7,7 @@
 #include <arpa/inet.h>
 #include <net/ethernet.h>
 #include <netpacket/packet.h>
-#include <net/if.h>
+#include <linux/if.h>
 #include <sys/ioctl.h>
 
 #include "8021x.h"

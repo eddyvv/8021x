@@ -52,9 +52,10 @@ typedef Ip_u32 Ipeap_vendor_type;
 
 typedef struct Ipeap_pkt_hdr_st
 {
+    Ip_u8 frame_type;
+    Ip_u16 len_0;
     Ip_u8 code;
     Ip_u8 id;
-    Ip_u16 len_0;
     Ip_u16 len_1;
     Ip_u8 type; /* Only present in requests and responses */
 }

@@ -191,7 +191,7 @@ Ip_err xt_8021x_send_eapol_start(Ip8021x_ctx* ctx)
     pkt = ip8021x_pkt_new(len, 0, 2, IP8021X_EAPOL_TYPE_START);
     if (!pkt)
         return IPCOM_ERR_FAILED;
-    pkt->end += 18;
+    pkt->end += 14;
     pkt->len = len;
 
     return ip8021x_send_eapol_msg(ctx, pkt, 2, IP8021X_EAPOL_TYPE_START);
@@ -227,6 +227,7 @@ int ip8021x_send_identity_request(struct Ip8021x_ctx_st *ctx)
     // eap_hdr->len_1 = 8;
     IP_SET_HTONS(&eap_hdr->len_1, 8);
     eap_hdr->type = IPEAP_TYPE_IDENTITY;
+    
     out_eap_pkt.end += 13;
     out_pkt->end += out_eap_pkt.end-out_eap_pkt.start;
     
@@ -336,7 +337,7 @@ IP_GLOBAL Ip_s32 ip8021x_auth_req_tmo_cb(struct Ip8021x_ctx_st *ctx)
 {
     // Ipeap_pkt *last_sent_pkt;
     /* 什么时间发需修改 */
-    if(ctx->req_retry_count > IP8021X_EAP_REQ_MAX_RETRIES)
+    // if(ctx->req_retry_count > IP8021X_EAP_REQ_MAX_RETRIES)
     {
         // Ipeap_pkt_hdr* last_sent_hdr;
         Ip_u8 last_sent_id = 1;
@@ -352,11 +353,13 @@ IP_GLOBAL Ip_s32 ip8021x_auth_req_tmo_cb(struct Ip8021x_ctx_st *ctx)
         // last_sent_id = last_sent_hdr->id++;
 
         ip8021x_send_eap_failure(ctx,last_sent_id);
+
+        ctx->req_retry_count = 0;
     }
 
     ctx->req_retry_count++;
 
-    ip8021x_send_last_eap_pkt(ctx);
+    // ip8021x_send_last_eap_pkt(ctx);
     return 1;
 }
 
@@ -376,6 +379,7 @@ IP_GLOBAL Ip_err ip8021x_tx_eapol_logoff(Ip8021x_ctx* ctx)
     eap_hdr = (Ipeap_pkt_hdr*)&out_eap_pkt.data[out_eap_pkt.start];
     eap_hdr->len_0 = 8;
     eap_hdr->type = IPEAP_TYPE_UNDEFINED;
+    // eap_hdr->frame_type = 02;
     out_eap_pkt.end += 4;
     pkt->end += out_eap_pkt.end-out_eap_pkt.start;
 
