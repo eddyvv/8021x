@@ -17,4 +17,13 @@ struct unpacked_tlv {
 };
 
 
+struct unpacked_tlv *free_unpkd_tlv(struct unpacked_tlv *tlv);
+struct packed_tlv *free_pkd_tlv(struct packed_tlv *tlv);
+struct unpacked_tlv *create_tlv();
+struct packed_tlv *create_ptlv(void);
+
+struct unpacked_tlv *bld_end_tlv();
+
+int tlv_ok(struct unpacked_tlv *tlv);
+struct packed_tlv *pack_end_tlv();
 #endif
