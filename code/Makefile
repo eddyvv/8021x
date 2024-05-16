@@ -6,7 +6,7 @@ CFLAGS = -Wall -std=gnu99 -fPIC -g
 INCLUDES   =-I./inc -I../ -I./inc/8021x -I./inc/lldp
 LIB_NAMES = -lm
 
-SOURCE  := $(wildcard ./src/*.c) $(wildcard ./src/*.cpp) $(wildcard ./*.c)
+SOURCE  := $(wildcard ./src/*.c) $(wildcard ./src/*.cpp) $(wildcard ./*.c) $(wildcard ./src/8021x/*.c) $(wildcard ./src/lldp/*.c)
 
 OBJS    := $(patsubst %.c,%.o,$(patsubst %.cpp,%.o,$(SOURCE)))
 
