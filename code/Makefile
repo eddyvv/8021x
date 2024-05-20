@@ -30,4 +30,4 @@ $(TARGET):$(OBJS)
 
 clean:
 	@echo "Remove linked and compiled files......"
-	rm -rf $(OBJ) $(TARGET) ./src/*.o output out
+	rm -rf $(OBJ) $(TARGET) ./src/8021x/*.o ./src/lldp/*.o ./*.o output out

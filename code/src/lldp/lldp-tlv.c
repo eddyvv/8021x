@@ -109,7 +109,6 @@ struct unpacked_tlv *bld_end_tlv()
 	return tlv;
 }
 
-
 struct packed_tlv *pack_end_tlv()
 {
 	struct unpacked_tlv *tlv;

@@ -298,4 +298,34 @@ enum {
 
 
 
+/* Tx States */
+enum {
+	TX_LLDP_INITIALIZE,
+	TX_IDLE,
+	TX_SHUTDOWN_FRAME,
+	TX_INFO_FRAME 
+};
+
+/******************************************************************************/
+/* Rx States */
+enum {
+	LLDP_WAIT_PORT_OPERATIONAL = 4,
+	DELETE_AGED_INFO,
+	RX_LLDP_INITIALIZE,
+	RX_WAIT_FOR_FRAME,
+	RX_FRAME,
+	DELETE_INFO,
+	UPDATE_INFO
+};
+
+struct l2_packet_data {
+	int fd;	/* socketfd */
+	int ifindex;	/* 接口号 */
+
+
+};
+
+
+
+
 #endif
