@@ -17,7 +17,7 @@ struct port {
 	// u16 dormantDelay;
 
 	// LIST_HEAD(agent_head, lldp_agent) agent_head;
-	// struct l2_packet_data *l2;
+	struct l2_packet_data *l2;
 	char ifname[IFNAMSIZ];
 };
 

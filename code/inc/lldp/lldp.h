@@ -19,6 +19,9 @@
 #define _LLDP_TLV_H
 
 #include <asm/types.h>
+#include <linux/if_ether.h>
+#include <string.h>
+#include "types.h"
 
 #define LLDP_ADDR_NEAREST_BRIDGE       \
   {                                    \
@@ -296,7 +299,11 @@ enum {
 #define LLDP_EVB_DEFAULT_RTE				15
 #define LLDP_EVB_DEFAULT_MAX_RTE			31
 
-
+#ifndef _MSC_VER
+#define STRUCT_PACKED(STRUCT) STRUCT __attribute__((__packed__))
+#else
+#define STRUCT_PACKED(STRUCT) __pragma(pack(push, 1)) STRUCT __pragma(pack(pop))
+#endif
 
 /* Tx States */
 enum {
@@ -321,11 +328,12 @@ enum {
 struct l2_packet_data {
 	int fd;	/* socketfd */
 	int ifindex;	/* 接口号 */
-
+	u8 dst_addr[ETH_ALEN];
+	// u8 sou_addr[ETH_ALEN];
 
 };
 
-
-
+void set_lldp_agent_admin(const char *ifname, int type, int admin);
+void show_lldp_buf(char *buf, int len);
 
 #endif

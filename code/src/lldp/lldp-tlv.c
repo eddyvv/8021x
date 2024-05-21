@@ -20,7 +20,7 @@ struct packed_tlv *pack_tlv(struct unpacked_tlv *tlv)
 		return NULL;
 
 	tl = tlv->type;
-	tl = tl << 9;
+	tl = tl << 8;
 	tl |= tlv->length & 0x01ff;
 	tl = htons(tl);
 

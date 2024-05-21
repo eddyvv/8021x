@@ -69,7 +69,8 @@ struct lldp_agent {
 
 	int	pad;
 
-	u8	mac_addr[ETH_ALEN];
+	u8	dst_mac_addr[ETH_ALEN];
+	u8	sou_mac_addr[ETH_ALEN];
 
 	struct	agentrx rx;
 	struct	agenttx tx;
@@ -84,4 +85,6 @@ struct lldp_agent {
 	// LIST_ENTRY(lldp_agent) entry;
 };
 
+int lldp_add_agent(const char *ifname, enum agent_type type);
+void oper_add_dev(char *ifname);
 #endif

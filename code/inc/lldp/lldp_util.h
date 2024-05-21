@@ -1,5 +1,5 @@
-#ifndef AGENT_H
-#define AGENT_H
+#ifndef LLDP_UTIL_H
+#define LLDP_UTIL_H
 
 
 #include "types.h"
