@@ -2,7 +2,6 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <string.h>
-#include <stdio.h>
 #include "ports.h"
 #include "l2_packet.h"
 #include "agent.h"
@@ -68,24 +67,33 @@ void config_tlv(struct unpacked_tlv *ptlv, int tlv_type)
 
         case TIME_TO_LIVE_TLV:
         {
-            ptlv->type = TIME_TO_LIVE_TLV;
+            // ptlv->type = TIME_TO_LIVE_TLV;
+            ptlv->type = 6;
             ptlv->length = sizeof(struct lldp_time_to_live);
         }
         break;
 
         case SYSTEM_NAME_TLV:
         {
-            ptlv->type = SYSTEM_NAME_TLV;
+            // ptlv->type = SYSTEM_NAME_TLV;
+            ptlv->type = 10;
             ptlv->length = sizeof(struct lldp_system_name);
         }
         break;
 
         default:
+            ptlv->type = 4;
+            ptlv->length = 2;
             printf("ERR:tlv_type err\r\n");
         break;
     }
 }
 
+
+#define htonl__(x)        (u32)((((x) & 0x000000ff) << 24) | \
+                                 (((x) & 0x0000ff00) <<  8) | \
+                                 (((x) & 0x00ff0000) >>  8) | \
+                                 (((x) & 0xff000000) >> 24))
 
 int config_tlv_buf(struct port *port, struct lldp_agent *agent, int tlv_type)
 {
@@ -99,7 +107,8 @@ int config_tlv_buf(struct port *port, struct lldp_agent *agent, int tlv_type)
             ptlv = test_gettlv(port, 2);
             if (ptlv)
             {
-                config_tlv(ptlv, CHASSIS_ID_TLV);
+                // config_tlv(ptlv, CHASSIS_ID_TLV);
+                config_tlv(ptlv, 2);
                 tlv = pack_tlv(ptlv);
                 tlv->tlv[2] = 6;
                 memcpy(agent->tx.frameout + agent->tx.sizeout, tlv->tlv, tlv->size);
@@ -112,7 +121,8 @@ int config_tlv_buf(struct port *port, struct lldp_agent *agent, int tlv_type)
             ptlv = test_gettlv(port, 2);
             if (ptlv)
             {
-                config_tlv(ptlv, PORT_ID_TLV);
+                // config_tlv(ptlv, PORT_ID_TLV);
+                config_tlv(ptlv, 4);
                 tlv = pack_tlv(ptlv);
                 tlv->tlv[2] = 5;
                 memcpy(agent->tx.frameout + agent->tx.sizeout, tlv->tlv, tlv->size);
@@ -138,9 +148,12 @@ int config_tlv_buf(struct port *port, struct lldp_agent *agent, int tlv_type)
             ptlv = test_gettlv(port, 4);
             if (ptlv)
             {
+                // char *str = "IOM1";
                 config_tlv(ptlv, SYSTEM_NAME_TLV);
                 tlv = pack_tlv(ptlv);
-                *(char *)&tlv->tlv[2] = "IOM1";
+                *(u64 *)&tlv->tlv[2] = 'IOM1';
+                *(u32 *)&tlv->tlv[2] = htonl__(*(u32 *)&tlv->tlv[2]);
+                // str_2_hex_str(&tlv->tlv[2], str);
                 memcpy(agent->tx.frameout + agent->tx.sizeout, tlv->tlv, tlv->size);
             }
         }
