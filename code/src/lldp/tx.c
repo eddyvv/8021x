@@ -103,6 +103,14 @@ void config_tlv(struct unpacked_tlv *ptlv, int tlv_type)
         }
         break;
 
+        case 0xfe:
+        {
+            ptlv->type = 0xFE;
+            ptlv->length = sizeof(struct lldp_bit_status);
+            printf("0xff len :%d\n", ptlv->length);
+        }
+        break;
+
         default:
             ptlv->type = 4;
             ptlv->length = 2;
@@ -139,17 +147,29 @@ void config_local_iom_port_tlv(struct packed_tlv *ptlv)
     struct packed_tlv *tlv = ptlv;
     struct lldp_local_port_status *sdt = (struct lldp_local_port_status *)(tlv->tlv + 2);
     
-    *(short *)sdt->organization_identity = 0x631;
+    *(u16 *)sdt->organization_identity = 0x631;
     sdt->customize_type = 0x10;
     for(i = 0; i < 48; i++)
     {
-        sdt->iom_port[i].port_speed = 25;
-        sdt->iom_port[i].port_status = 1;
+        sdt->iom_port[i].port_speed = 0;
+        sdt->iom_port[i].port_status = 0;
         sdt->iom_port[i].port_device_certification_status = 0;
         sdt->iom_port[i].port_device_Internet_status = 0;
         for(j = 0; j < 4; j++)
             sdt->iom_port[i].port_device_id[j] = 0;
     }
+}
+
+void config_bit_status_tlv(struct packed_tlv *ptlv)
+{
+    int i = 0;
+    struct packed_tlv *tlv = ptlv;
+    struct lldp_bit_status *sdt = (struct lldp_bit_status *)(tlv->tlv + 2);
+    
+    *(u16 *)sdt->organization_identity = 0x631;
+    sdt->customize_type = 0x12;
+    for(i = 0; i < 16; i++)
+        sdt->data[i] = 0;
 }
 
 int config_tlv_buf(struct port *port, struct lldp_agent *agent, int tlv_type)
@@ -241,6 +261,19 @@ int config_tlv_buf(struct port *port, struct lldp_agent *agent, int tlv_type)
         }
         break;
 
+        case 0xfe:
+        {
+            ptlv = test_gettlv(port, 22);
+            if (ptlv)
+            {
+                config_tlv(ptlv, 0xfe);
+                tlv = pack_tlv(ptlv);
+                config_bit_status_tlv(tlv);
+                memcpy(agent->tx.frameout + agent->tx.sizeout, tlv->tlv, tlv->size);
+            }
+        }
+        break;
+
         default:
             printf("ERR:tlv_type err\r\n");
         break;
@@ -300,9 +333,20 @@ bool mibConstrInfoLLDPDU(struct port *port, struct lldp_agent *agent)
     fb_offset += config_tlv_buf(port, agent, SYSTEM_DESCRIPTION_TLV);
     agent->tx.sizeout = fb_offset;
 
+    /* 本地端口状态（本地IOM端口状态） */
     fb_offset += config_tlv_buf(port, agent, 0xff);
     agent->tx.sizeout = fb_offset;
 
+    /* 远端口状态（本IOM级联的IOM1的端口状态） */
+    fb_offset += config_tlv_buf(port, agent, 0xff);
+    agent->tx.sizeout = fb_offset;
+
+    /* 远端口状态（本IOM级联的IOM2的端口状态） */
+    fb_offset += config_tlv_buf(port, agent, 0xff);
+    agent->tx.sizeout = fb_offset;
+
+    fb_offset += config_tlv_buf(port, agent, 0xfe);
+    agent->tx.sizeout = fb_offset;
 
 
     tlv = pack_end_tlv();
