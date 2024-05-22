@@ -334,6 +334,6 @@ struct l2_packet_data {
 };
 
 void set_lldp_agent_admin(const char *ifname, int type, int admin);
-void show_lldp_buf(char *buf, int len);
+void show_lldp_buf(u8 *buf, int len);
 
 #endif

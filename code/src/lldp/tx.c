@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include <assert.h>
 #include <stdbool.h>
 #include <string.h>
@@ -55,6 +56,7 @@ void config_tlv(struct unpacked_tlv *ptlv, int tlv_type)
         {
             ptlv->type = CHASSIS_ID_TLV;
             ptlv->length = sizeof(struct lldp_dev_id);
+            printf("CHASSIS_ID_TLV len :%d\n", ptlv->length);
         }
         break;
 
@@ -62,6 +64,7 @@ void config_tlv(struct unpacked_tlv *ptlv, int tlv_type)
         {
             ptlv->type = PORT_ID_TLV;
             ptlv->length = sizeof(struct lldp_port_id);
+            printf("PORT_ID_TLV len :%d\n", ptlv->length);
         }
         break;
 
@@ -70,6 +73,7 @@ void config_tlv(struct unpacked_tlv *ptlv, int tlv_type)
             // ptlv->type = TIME_TO_LIVE_TLV;
             ptlv->type = 6;
             ptlv->length = sizeof(struct lldp_time_to_live);
+            printf("TIME_TO_LIVE_TLV len :%d\n", ptlv->length);
         }
         break;
 
@@ -78,6 +82,7 @@ void config_tlv(struct unpacked_tlv *ptlv, int tlv_type)
             // ptlv->type = SYSTEM_NAME_TLV;
             ptlv->type = 10;
             ptlv->length = sizeof(struct lldp_system_name);
+            printf("SYSTEM_NAME_TLV len :%d\n", ptlv->length);
         }
         break;
 
@@ -87,6 +92,14 @@ void config_tlv(struct unpacked_tlv *ptlv, int tlv_type)
             ptlv->type = 0x0C;
             ptlv->length = sizeof(struct lldp_system_description);
             printf("SYSTEM_DESCRIPTION_TLV len :%d\n", ptlv->length);
+        }
+        break;
+
+        case 0xff:
+        {
+            ptlv->type = 0xFF;
+            ptlv->length = sizeof(struct lldp_local_port_status);
+            printf("0xff len :%d\n", ptlv->length);
         }
         break;
 
@@ -101,20 +114,49 @@ void config_tlv(struct unpacked_tlv *ptlv, int tlv_type)
 void config_sys_description_tlv(struct packed_tlv *ptlv)
 {
     struct packed_tlv *tlv = ptlv;
-    struct lldp_system_description *sdt = (struct lldp_system_description *)tlv->tlv;
+    struct lldp_system_description *sdt = (struct lldp_system_description *)(tlv->tlv + 2);
 
-    // sdt->
+    sdt->manufacturer = htonl(0x631);
+    sdt->hard_num = INT64_TO_NET(0x0230908001);
+    sdt->hard_stand_version = 0;
+    sdt->hard_date_version = 0;
+    sdt->logic_stand_version = htonl(0x02010000);
+    sdt->logic_date_version = htonl(0x24010501);
+    sdt->firmware_stand_version = htonl(0x02010000);
+    sdt->firmware_date_version = htonl(0x24010501);
+    sdt->mcu_software_stand_version = htonl(0x02010000);
+    sdt->mcu_software_date_version = htonl(0x24010501);
+    sdt->network_management_roles = 1;
+    sdt->clock_synchronizationroles = 1;
+    sdt->static_calendar = 0;
+    sdt->static_system_rtc_s = 0;
+    sdt->static_system_rtc_ns = 0;
 }
 
-#define htonl__(x)        (u32)((((x) & 0x000000ff) << 24) | \
-                                 (((x) & 0x0000ff00) <<  8) | \
-                                 (((x) & 0x00ff0000) >>  8) | \
-                                 (((x) & 0xff000000) >> 24))
+void config_local_iom_port_tlv(struct packed_tlv *ptlv)
+{
+    int i = 0, j = 0;
+    struct packed_tlv *tlv = ptlv;
+    struct lldp_local_port_status *sdt = (struct lldp_local_port_status *)(tlv->tlv + 2);
+    
+    *(short *)sdt->organization_identity = 0x631;
+    sdt->customize_type = 0x10;
+    for(i = 0; i < 48; i++)
+    {
+        sdt->iom_port[i].port_speed = 25;
+        sdt->iom_port[i].port_status = 1;
+        sdt->iom_port[i].port_device_certification_status = 0;
+        sdt->iom_port[i].port_device_Internet_status = 0;
+        for(j = 0; j < 4; j++)
+            sdt->iom_port[i].port_device_id[j] = 0;
+    }
+}
 
 int config_tlv_buf(struct port *port, struct lldp_agent *agent, int tlv_type)
 {
     struct unpacked_tlv *ptlv =  NULL;
     struct packed_tlv *tlv;
+    char *str = 'IOM1';
 
     switch(tlv_type)
     {
@@ -164,11 +206,10 @@ int config_tlv_buf(struct port *port, struct lldp_agent *agent, int tlv_type)
             ptlv = test_gettlv(port, 4);
             if (ptlv)
             {
-                char *str = 'IOM1';
                 config_tlv(ptlv, SYSTEM_NAME_TLV);
                 tlv = pack_tlv(ptlv);
                 *(u64 *)&tlv->tlv[2] = str;
-                *(u32 *)&tlv->tlv[2] = htonl__(*(u32 *)&tlv->tlv[2]);
+                *(u32 *)&tlv->tlv[2] = htonl(*(u32 *)&tlv->tlv[2]);
                 memcpy(agent->tx.frameout + agent->tx.sizeout, tlv->tlv, tlv->size);
             }
         }
@@ -181,6 +222,20 @@ int config_tlv_buf(struct port *port, struct lldp_agent *agent, int tlv_type)
             {
                 config_tlv(ptlv, SYSTEM_DESCRIPTION_TLV);
                 tlv = pack_tlv(ptlv);
+                config_sys_description_tlv(tlv);
+                memcpy(agent->tx.frameout + agent->tx.sizeout, tlv->tlv, tlv->size);
+            }
+        }
+        break;
+
+        case 0xff:
+        {
+            ptlv = test_gettlv(port, 390);
+            if (ptlv)
+            {
+                config_tlv(ptlv, 0xff);
+                tlv = pack_tlv(ptlv);
+                config_local_iom_port_tlv(tlv);
                 memcpy(agent->tx.frameout + agent->tx.sizeout, tlv->tlv, tlv->size);
             }
         }
@@ -198,6 +253,7 @@ bool mibConstrInfoLLDPDU(struct port *port, struct lldp_agent *agent)
     struct l2_ethhdr eth;
     char macstring[30];
     u32 fb_offset = 0;
+    struct packed_tlv *tlv =  NULL;
     
     if (agent->tx.frameout) {
 		free(agent->tx.frameout);
@@ -243,15 +299,28 @@ bool mibConstrInfoLLDPDU(struct port *port, struct lldp_agent *agent)
 
     fb_offset += config_tlv_buf(port, agent, SYSTEM_DESCRIPTION_TLV);
     agent->tx.sizeout = fb_offset;
+
+    fb_offset += config_tlv_buf(port, agent, 0xff);
+    agent->tx.sizeout = fb_offset;
+
+
+
+    tlv = pack_end_tlv();
+    memcpy(agent->tx.frameout + fb_offset, tlv->tlv, tlv->size);
+    fb_offset += tlv->size;
+    agent->tx.sizeout = fb_offset;
+    free_pkd_tlv(tlv);
+
+    return true;
 }
 
 
 /* 发送 */
-u8 txFrame(struct port *port, struct lldp_agent *agent)
-{
-    l2_packet_send(port->l2, agent->dst_mac_addr,
-		htons(ETH_P_LLDP), agent->tx.frameout, agent->tx.sizeout);
-}
+// u8 txFrame(struct port *port, struct lldp_agent *agent)
+// {
+//     l2_packet_send(port->l2, agent->dst_mac_addr,
+// 		htons(ETH_P_LLDP), agent->tx.frameout, agent->tx.sizeout);
+// }
 
 void process_tx_info_frame(struct port *port, struct lldp_agent *agent)
 {

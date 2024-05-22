@@ -42,14 +42,34 @@ int l2_packet_send(struct l2_packet_data *l2, const u8 *dst_addr, u16 proto,
 	return ret;
 }
 
-void show_lldp_buf(char *buf, int len)
+void show_lldp_buf(u8 *buf, int len)
 {
-	int i;
+	int i = 0;
 
 	printf("len = %d\n", len);
-
+	printf("      ");
+	for(i = 0; i < 16; i++)
+	{
+		printf("%.2d ", i+1);
+		if(i == 7)
+			printf(" ");
+	}
+	printf("\n");
+	printf("\n");
+	printf("%.3d: ", 0);
 	for(i = 0; i < len; i++)
+	{
+		if(i == 0)
+			printf(" ");
 		printf("%.2x ", buf[i] & 0xff);
+		if((i+1)%16 == 0 && i != 0)
+		{
+			printf("\n");
+			printf("%.3x: ", (i/16 + 1) << 4);
+		}
+		if((i+1)%8 == 0)
+			printf(" ");
+	}
 
     printf("\n");
     printf("\n");

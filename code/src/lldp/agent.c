@@ -7,6 +7,7 @@
 #include "lldp/ports.h"
 #include "lldp/agent.h"
 #include "l2_packet.h"
+#include "lldp_util.h"
 
 /* IEEE 802.1AB-2009 - Table 7-1: group MAC addresses used by LLDP */
 const u8 nearest_bridge[ETH_ALEN] = {0x01,0x80,0xc2,0x00,0x00,0x0e};
@@ -16,11 +17,11 @@ const u8 nearest_customer_bridge[ETH_ALEN] = {0x01,0x80,0xc2,0x00,0x00,0x00};
 struct port *port = NULL;
 struct lldp_agent *agent = NULL;
 
-static const u8 * agent_groupmacs[AGENT_MAX] = {
-	nearest_bridge,
-	nearest_nontpmr_bridge,
-	nearest_customer_bridge,
-};
+// static const u8 * agent_groupmacs[AGENT_MAX] = {
+// 	nearest_bridge,
+// 	nearest_nontpmr_bridge,
+// 	nearest_customer_bridge,
+// };
 
 void lldp_init_agent(struct port *port, struct lldp_agent *agent, int type)
 {
