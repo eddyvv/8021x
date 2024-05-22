@@ -31,21 +31,21 @@ struct lldp_time_to_live {
 } __attribute__ ((__packed__));
 
 struct lldp_system_name {
-	u8 data[8];
+	u8 data[10];
 } __attribute__ ((__packed__));
 
 struct lldp_system_description {
 	u8 reserved[2];
-	u8 manufacturer[4];
-	u8 hard_num[8];
-	u8 hard_stand_version[4];
-	u8 hard_date_version[4];
-	u8 logic_stand_version[4];
-	u8 logic_date_version[4];
-	u8 firmware_stand_version[4];
-	u8 firmware_date_version[4];
-	u8 mcu_software_stand_version[4];
-	u8 mcu_software_date_version[4];
+	u8 manufacturer[4];				/* 厂家信息 */
+	u8 hard_num[8];					/* 硬件编号 */
+	u8 hard_stand_version[4];		/* 硬件标准版本 */
+	u8 hard_date_version[4];		/* 硬件日期版本 */
+	u8 logic_stand_version[4];		/* 逻辑标准版本 */
+	u8 logic_date_version[4];		/* 逻辑日期版本 */
+	u8 firmware_stand_version[4];	/* 固件标准版本 */
+	u8 firmware_date_version[4];	/* 固件日期版本 */
+	u8 mcu_software_stand_version[4];	/* mcu软件标准版本 */
+	u8 mcu_software_date_version[4];	/* mcu软件日期版本 */
 
 	u8 reserved0_stand_version[4];
 	u8 reserved0_date_version[4];
@@ -55,15 +55,14 @@ struct lldp_system_description {
 	u8 reserved2_date_version[4];
 	u8 reserved3_stand_version[4];
 	u8 reserved3_date_version[4];
-	u8 reserved4_stand_version[4];
-	u8 reserved4_date_version[4];
 
 	u8 reserved_1[2];
-	u8 network_management_roles;
-	u8 clock_synchronizationroles;
-	u8 static_calendar[8];
-	u8 static_system_rtc_s[8];
-	u8 static_system_rtc_ns[8];
+
+	u8 network_management_roles;	/* 网络管理角色 0：待定，1：主，其他：从*/
+	u8 clock_synchronizationroles;	/* 时钟同步角色 0：client，1：master，default：0 */
+	u8 static_calendar[8];			/* 静态日历 */
+	u8 static_system_rtc_s[8];		/* 静态系统RTC秒 */
+	u8 static_system_rtc_ns[4];		/* 静态系统RTC纳秒 */
 	u8 reserved_2[28];
 } __attribute__ ((__packed__));
 

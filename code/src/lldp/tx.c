@@ -81,6 +81,15 @@ void config_tlv(struct unpacked_tlv *ptlv, int tlv_type)
         }
         break;
 
+        case SYSTEM_DESCRIPTION_TLV:
+        {
+            // ptlv->type = SYSTEM_DESCRIPTION_TLV;
+            ptlv->type = 0x0C;
+            ptlv->length = sizeof(struct lldp_system_description);
+            printf("SYSTEM_DESCRIPTION_TLV len :%d\n", ptlv->length);
+        }
+        break;
+
         default:
             ptlv->type = 4;
             ptlv->length = 2;
@@ -89,6 +98,13 @@ void config_tlv(struct unpacked_tlv *ptlv, int tlv_type)
     }
 }
 
+void config_sys_description_tlv(struct packed_tlv *ptlv)
+{
+    struct packed_tlv *tlv = ptlv;
+    struct lldp_system_description *sdt = (struct lldp_system_description *)tlv->tlv;
+
+    // sdt->
+}
 
 #define htonl__(x)        (u32)((((x) & 0x000000ff) << 24) | \
                                  (((x) & 0x0000ff00) <<  8) | \
@@ -148,12 +164,23 @@ int config_tlv_buf(struct port *port, struct lldp_agent *agent, int tlv_type)
             ptlv = test_gettlv(port, 4);
             if (ptlv)
             {
-                // char *str = "IOM1";
+                char *str = 'IOM1';
                 config_tlv(ptlv, SYSTEM_NAME_TLV);
                 tlv = pack_tlv(ptlv);
-                *(u64 *)&tlv->tlv[2] = 'IOM1';
+                *(u64 *)&tlv->tlv[2] = str;
                 *(u32 *)&tlv->tlv[2] = htonl__(*(u32 *)&tlv->tlv[2]);
-                // str_2_hex_str(&tlv->tlv[2], str);
+                memcpy(agent->tx.frameout + agent->tx.sizeout, tlv->tlv, tlv->size);
+            }
+        }
+        break;
+
+        case SYSTEM_DESCRIPTION_TLV:
+        {
+            ptlv = test_gettlv(port, 130);
+            if (ptlv)
+            {
+                config_tlv(ptlv, SYSTEM_DESCRIPTION_TLV);
+                tlv = pack_tlv(ptlv);
                 memcpy(agent->tx.frameout + agent->tx.sizeout, tlv->tlv, tlv->size);
             }
         }
@@ -212,6 +239,9 @@ bool mibConstrInfoLLDPDU(struct port *port, struct lldp_agent *agent)
     agent->tx.sizeout = fb_offset;
 
     fb_offset += config_tlv_buf(port, agent, SYSTEM_NAME_TLV);
+    agent->tx.sizeout = fb_offset;
+
+    fb_offset += config_tlv_buf(port, agent, SYSTEM_DESCRIPTION_TLV);
     agent->tx.sizeout = fb_offset;
 }
 
