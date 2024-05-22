@@ -101,7 +101,7 @@ struct lldp_ip_assignment {
 	u16 reserved;
 	u8  organization_identity[3];	/* 组织标识 */
 	u8  customize_type;				/* 自定义类型 */
-	u8  data[24];
+	u8  data[21];
 	u8  reserved_1[3];
 } __attribute__ ((__packed__));
 

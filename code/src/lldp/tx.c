@@ -47,9 +47,8 @@ out_err:
 }
 
 
-void config_tlv(struct unpacked_tlv *ptlv, int tlv_type)
+void config_tlv(struct unpacked_tlv *ptlv, int tlv_type, int customize_type)
 {
-
     switch(tlv_type)
     {
         case CHASSIS_ID_TLV:
@@ -106,8 +105,34 @@ void config_tlv(struct unpacked_tlv *ptlv, int tlv_type)
         case 0xfe:
         {
             ptlv->type = 0xFE;
-            ptlv->length = sizeof(struct lldp_bit_status);
-            printf("0xff len :%d\n", ptlv->length);
+            switch(customize_type)
+            {
+                case 0x12:
+                {
+                    ptlv->length = sizeof(struct lldp_bit_status);
+                    printf("0xfe 0x12 len :%d\n", ptlv->length);
+                }
+                break;
+
+                case 0x13:
+                {
+                    ptlv->length = sizeof(struct lldp_ip_assignment);
+                    printf("0xfe 0x13 len :%d\n", ptlv->length);
+                }
+                break;
+
+                case 0x14:
+                {
+                    ptlv->length = sizeof(struct lldp_recording_device_ip);
+                    printf("0xfe 0x14 len :%d\n", ptlv->length);
+                }
+                break;
+
+                default:
+
+                break;
+            }
+
         }
         break;
 
@@ -172,7 +197,29 @@ void config_bit_status_tlv(struct packed_tlv *ptlv)
         sdt->data[i] = 0;
 }
 
-int config_tlv_buf(struct port *port, struct lldp_agent *agent, int tlv_type)
+void config_recording_dev_ip_tlv(struct packed_tlv *ptlv)
+{
+    struct packed_tlv *tlv = ptlv;
+    struct lldp_recording_device_ip *sdt = (struct lldp_recording_device_ip *)(tlv->tlv + 2);
+
+    *(u16 *)sdt->organization_identity = 0x631;
+    sdt->customize_type = 0x14;
+
+    sdt->mide_dev_ip = htonl(0x11223344);
+    sdt->tde_dev_ip = htonl(0x11223344);
+}
+
+void config_ip_assignment(struct packed_tlv *ptlv)
+{
+    struct packed_tlv *tlv = ptlv;
+    struct lldp_ip_assignment *sdt = (struct lldp_ip_assignment *)(tlv->tlv + 2);
+
+    *(u16 *)sdt->organization_identity = 0x631;
+    sdt->customize_type = 0x13;
+
+}
+
+int config_tlv_buf(struct port *port, struct lldp_agent *agent, int tlv_type, int customize_type)
 {
     struct unpacked_tlv *ptlv =  NULL;
     struct packed_tlv *tlv;
@@ -185,8 +232,8 @@ int config_tlv_buf(struct port *port, struct lldp_agent *agent, int tlv_type)
             ptlv = test_gettlv(port, 2);
             if (ptlv)
             {
-                // config_tlv(ptlv, CHASSIS_ID_TLV);
-                config_tlv(ptlv, 2);
+                // config_tlv(ptlv, CHASSIS_ID_TLV, 0);
+                config_tlv(ptlv, 2, 0);
                 tlv = pack_tlv(ptlv);
                 tlv->tlv[2] = 6;
                 memcpy(agent->tx.frameout + agent->tx.sizeout, tlv->tlv, tlv->size);
@@ -199,8 +246,8 @@ int config_tlv_buf(struct port *port, struct lldp_agent *agent, int tlv_type)
             ptlv = test_gettlv(port, 2);
             if (ptlv)
             {
-                // config_tlv(ptlv, PORT_ID_TLV);
-                config_tlv(ptlv, 4);
+                // config_tlv(ptlv, PORT_ID_TLV, 0);
+                config_tlv(ptlv, 4, 0);
                 tlv = pack_tlv(ptlv);
                 tlv->tlv[2] = 5;
                 memcpy(agent->tx.frameout + agent->tx.sizeout, tlv->tlv, tlv->size);
@@ -213,7 +260,7 @@ int config_tlv_buf(struct port *port, struct lldp_agent *agent, int tlv_type)
             ptlv = test_gettlv(port, 4);
             if (ptlv)
             {
-                config_tlv(ptlv, TIME_TO_LIVE_TLV);
+                config_tlv(ptlv, TIME_TO_LIVE_TLV, 0);
                 tlv = pack_tlv(ptlv);
                 *(short *)&tlv->tlv[2] = 0xFFFF;
                 memcpy(agent->tx.frameout + agent->tx.sizeout, tlv->tlv, tlv->size);
@@ -226,7 +273,7 @@ int config_tlv_buf(struct port *port, struct lldp_agent *agent, int tlv_type)
             ptlv = test_gettlv(port, 4);
             if (ptlv)
             {
-                config_tlv(ptlv, SYSTEM_NAME_TLV);
+                config_tlv(ptlv, SYSTEM_NAME_TLV, 0);
                 tlv = pack_tlv(ptlv);
                 *(u64 *)&tlv->tlv[2] = str;
                 *(u32 *)&tlv->tlv[2] = htonl(*(u32 *)&tlv->tlv[2]);
@@ -240,7 +287,7 @@ int config_tlv_buf(struct port *port, struct lldp_agent *agent, int tlv_type)
             ptlv = test_gettlv(port, 130);
             if (ptlv)
             {
-                config_tlv(ptlv, SYSTEM_DESCRIPTION_TLV);
+                config_tlv(ptlv, SYSTEM_DESCRIPTION_TLV, 0);
                 tlv = pack_tlv(ptlv);
                 config_sys_description_tlv(tlv);
                 memcpy(agent->tx.frameout + agent->tx.sizeout, tlv->tlv, tlv->size);
@@ -253,7 +300,7 @@ int config_tlv_buf(struct port *port, struct lldp_agent *agent, int tlv_type)
             ptlv = test_gettlv(port, 390);
             if (ptlv)
             {
-                config_tlv(ptlv, 0xff);
+                config_tlv(ptlv, 0xff, 0);
                 tlv = pack_tlv(ptlv);
                 config_local_iom_port_tlv(tlv);
                 memcpy(agent->tx.frameout + agent->tx.sizeout, tlv->tlv, tlv->size);
@@ -263,14 +310,49 @@ int config_tlv_buf(struct port *port, struct lldp_agent *agent, int tlv_type)
 
         case 0xfe:
         {
-            ptlv = test_gettlv(port, 22);
-            if (ptlv)
+            switch(customize_type)
             {
-                config_tlv(ptlv, 0xfe);
-                tlv = pack_tlv(ptlv);
-                config_bit_status_tlv(tlv);
-                memcpy(agent->tx.frameout + agent->tx.sizeout, tlv->tlv, tlv->size);
+                case 0x12:
+                {
+                    ptlv = test_gettlv(port, 22);
+                    if (ptlv)
+                    {
+                        config_tlv(ptlv, 0xfe, customize_type);
+                        tlv = pack_tlv(ptlv);
+                        config_bit_status_tlv(tlv);
+                    }
+                }
+                break;
+
+                case 0x13:
+                {
+                    ptlv = test_gettlv(port, 30);
+                    if (ptlv)
+                    {
+                        config_tlv(ptlv, 0xfe, customize_type);
+                        tlv = pack_tlv(ptlv);
+                        config_ip_assignment(tlv);
+                    }
+                }
+                break;
+
+                case 0x14:
+                {
+                    ptlv = test_gettlv(port, 14);
+                    if (ptlv)
+                    {
+                        config_tlv(ptlv, 0xfe, customize_type);
+                        tlv = pack_tlv(ptlv);
+                        config_recording_dev_ip_tlv(tlv);
+                    }
+                }
+                break;
+
+                default:
+
+                break;
             }
+            memcpy(agent->tx.frameout + agent->tx.sizeout, tlv->tlv, tlv->size);
         }
         break;
 
@@ -280,6 +362,7 @@ int config_tlv_buf(struct port *port, struct lldp_agent *agent, int tlv_type)
     }
     return tlv->size;
 }
+
 
 bool mibConstrInfoLLDPDU(struct port *port, struct lldp_agent *agent)
 {
@@ -318,36 +401,44 @@ bool mibConstrInfoLLDPDU(struct port *port, struct lldp_agent *agent)
 	fb_offset += sizeof(struct l2_ethhdr);
     agent->tx.sizeout = fb_offset;
 
-    fb_offset += config_tlv_buf(port, agent, CHASSIS_ID_TLV);
+    fb_offset += config_tlv_buf(port, agent, CHASSIS_ID_TLV, 0);
     agent->tx.sizeout = fb_offset;
 
-    fb_offset += config_tlv_buf(port, agent, PORT_ID_TLV);
+    fb_offset += config_tlv_buf(port, agent, PORT_ID_TLV, 0);
     agent->tx.sizeout = fb_offset;
 
-    fb_offset += config_tlv_buf(port, agent, TIME_TO_LIVE_TLV);
+    fb_offset += config_tlv_buf(port, agent, TIME_TO_LIVE_TLV, 0);
     agent->tx.sizeout = fb_offset;
 
-    fb_offset += config_tlv_buf(port, agent, SYSTEM_NAME_TLV);
+    fb_offset += config_tlv_buf(port, agent, SYSTEM_NAME_TLV, 0);
     agent->tx.sizeout = fb_offset;
 
-    fb_offset += config_tlv_buf(port, agent, SYSTEM_DESCRIPTION_TLV);
+    fb_offset += config_tlv_buf(port, agent, SYSTEM_DESCRIPTION_TLV, 0);
     agent->tx.sizeout = fb_offset;
 
     /* 本地端口状态（本地IOM端口状态） */
-    fb_offset += config_tlv_buf(port, agent, 0xff);
+    fb_offset += config_tlv_buf(port, agent, 0xff, 0);
     agent->tx.sizeout = fb_offset;
 
     /* 远端口状态（本IOM级联的IOM1的端口状态） */
-    fb_offset += config_tlv_buf(port, agent, 0xff);
+    fb_offset += config_tlv_buf(port, agent, 0xff, 0);
     agent->tx.sizeout = fb_offset;
 
     /* 远端口状态（本IOM级联的IOM2的端口状态） */
-    fb_offset += config_tlv_buf(port, agent, 0xff);
+    fb_offset += config_tlv_buf(port, agent, 0xff, 0);
     agent->tx.sizeout = fb_offset;
 
-    fb_offset += config_tlv_buf(port, agent, 0xfe);
+    /* BIT状态 */
+    fb_offset += config_tlv_buf(port, agent, 0xfe, 0x12);
     agent->tx.sizeout = fb_offset;
 
+    /* 记录设备IP地质 */
+    fb_offset += config_tlv_buf(port, agent, 0xfe, 0x14);
+    agent->tx.sizeout = fb_offset;
+
+    /* IP地址分配 */
+    fb_offset += config_tlv_buf(port, agent, 0xfe, 0x13);
+    agent->tx.sizeout = fb_offset;
 
     tlv = pack_end_tlv();
     memcpy(agent->tx.frameout + fb_offset, tlv->tlv, tlv->size);
