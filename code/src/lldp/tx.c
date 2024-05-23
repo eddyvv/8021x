@@ -236,6 +236,7 @@ int config_tlv_buf(struct port *port, struct lldp_agent *agent, int tlv_type, in
                 config_tlv(ptlv, 2, 0);
                 tlv = pack_tlv(ptlv);
                 tlv->tlv[2] = 6;
+                tlv->tlv[3] = 1;
                 memcpy(agent->tx.frameout + agent->tx.sizeout, tlv->tlv, tlv->size);
             }
         }
@@ -250,6 +251,7 @@ int config_tlv_buf(struct port *port, struct lldp_agent *agent, int tlv_type, in
                 config_tlv(ptlv, 4, 0);
                 tlv = pack_tlv(ptlv);
                 tlv->tlv[2] = 5;
+                tlv->tlv[3] = 0x1b;
                 memcpy(agent->tx.frameout + agent->tx.sizeout, tlv->tlv, tlv->size);
             }
         }
